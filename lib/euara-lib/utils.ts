@@ -7,6 +7,8 @@ import * as checksum from 'checksum';
 import * as request from 'request';
 import tmp = require('tmp');
 import tar = require('tar');
+let exec = require('child_process').exec;
+
 
 export class Utils {
     public getTagVersion(feed: NPMFeed, tag: string) {
@@ -73,6 +75,7 @@ export class Utils {
     public readFile(file: string): Promise<string> {
         return new Observable<string>((o: Observer<string>) => {
             fs.readFile(file, {encoding: 'utf-8'}, function(err: any, data: any){
+                
                 if (!err){
                     o.next(data);
                 }else{
@@ -96,7 +99,7 @@ export class Utils {
         }).toPromise();
     }
 
-    public extactTarball(fileName: string): Promise<string> {
+    public extractTarball(fileName: string): Promise<string> {
         return new Observable<string>((o: Observer<string>) => {
             var tmpobj = tmp.dirSync();
             tar.Extract({
@@ -110,6 +113,29 @@ export class Utils {
             tar.on('error', x => {
                 o.next(null);
                 console.log('Tar Extract Error', x);
+                o.complete();
+            });
+        }).toPromise();
+    }
+
+    public newTmpDir(cleanup: boolean = true) {
+        return new Observable<string>((o: Observer<string>) => {
+            tmp.dir({unsafeCleanup: cleanup}, (err, path) => {
+                o.next(path);
+                o.complete();
+            });
+        }).toPromise();
+    }
+
+    public exec(cmd: string) {
+        return new Observable<string>((o: Observer<string>) => {
+            exec(cmd, function(error, stdout, stderr) {
+                if(error) {
+                    o.error(stderr)
+                    
+                } else {
+                    o.next(stdout);
+                }
                 o.complete();
             });
         }).toPromise();

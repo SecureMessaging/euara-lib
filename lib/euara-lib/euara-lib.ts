@@ -102,13 +102,26 @@ export class Euara {
         return manifest.sign(signer, privateKey);
     }
 
-    async downloadRelease(manifestName: string, manifestVersion:string = 'latest') {
-        let feed = await this.utils.getNPMFeed(this.config.npmRegistry, manifestName);
-        let tarballFile = await this.utils.downloadTarball(feed, manifestVersion);
-        let extractLoc = await this.utils.extactTarball(tarballFile);
-        console.log(extractLoc);
+    async publishManifest(manifest: Manifest) {
+        let packageJson = this.convertManifestToNpmPackageJson(manifest);
+        let tmpDir = await this.utils.newTmpDir(false);
+        console.log("tempDir", tmpDir);
+        await this.writeManifestFile(tmpDir + '/manifest.json', manifest);
+        await this.utils.writeFile(tmpDir + '/package.json', packageJson);
+        let result = await this.utils.exec(`npm publish ${tmpDir} --access public`);
+        console.log(result);
+        return true;
     }
 
+    async downloadRelease(manifestName: string, manifestVersion:string = 'latest'): Promise<string> {
+        let feed = await this.utils.getNPMFeed(this.config.npmRegistry, manifestName);
+        let tarballFile = await this.utils.downloadTarball(feed, manifestVersion);
+        return await this.unZip(tarballFile);
+    }
+
+    public unZip(tarballFile: string): Promise<string> {
+        return this.utils.extractTarball(tarballFile);;
+    }
 
     private async readManifestFile(manifestFile: string): Promise<Object> {
         return JSON.parse(await this.utils.readFile(manifestFile)) as Object;
@@ -125,10 +138,17 @@ export class Euara {
     private manifestToString(manifest: Manifest): string {
         return manifest.toString();
     }
+
+    private convertManifestToNpmPackageJson(manifest: Manifest): string {
+        return JSON.stringify({
+            name : manifest.name,
+            version: manifest.manifestVersion
+        });
+    }
 }
 
 export class EuaraConfig {
-    npmRegistry: string = "http://localhost:4873/"; //"https://registry.npmjs.org/";
+    npmRegistry: string = "http://localnpm:4873/"; //"https://registry.npmjs.org/";
     package: string;
     manifestFile: string;
     version: string;

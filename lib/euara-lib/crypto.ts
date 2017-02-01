@@ -25,12 +25,8 @@ export class Crypto {
     }
 
     public verify(data: any, signature: any, publicKey: string): boolean {
-        console.time('Verify');
-        
         let key = new NodeRSA({signingScheme: 'pkcs1-sha256'});
         key.importKey(publicKey, 'pkcs1-public-pem');
-        //let decodedSignature = this.b64Decode(signature);
-        console.timeEnd('Verify');
         try {
             return key.verify(this.b64Encode(data), signature, 'utf8', 'base64');
         } catch(e) {

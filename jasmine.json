@@ -1,0 +1,10 @@
+{
+  "spec_dir": "./dist/tests",
+  "spec_files": [
+    "./dist/tests/*[sS]pec.js",
+    "./dist/tests/euara-lib.spec.js"
+  ],
+  "helpers": [],
+  "stopSpecOnExpectationFailure": false,
+  "random": false
+}

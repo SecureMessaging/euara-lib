@@ -13,19 +13,21 @@
   },
   "devDependencies": {
     "@types/checksum": "^0.1.30",
+    "@types/jasmine": "^2.5.41",
     "@types/request": "0.0.36",
     "@types/rx": "^2.5.34",
     "@types/webpack": "^2.0.0",
     "copy-webpack-plugin": "^4.0.1",
     "declaration-bundler-webpack-plugin": "^1.0.3",
     "dtsbundler-webpack-plugin": "^1.0.0",
+    "jasmine": "^2.5.3",
     "json-loader": "^0.5.4",
     "ts-loader": "^1.3.3",
-    "webpack": "^1.14.0",
-    "typescript": "^2.1.4"
+    "typescript": "^2.1.4",
+    "webpack": "^1.14.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "tsc && jasmine --captureExceptions ./dist/tests/*.js",
     "release": "curl -vs http://54.204.236.95:3000/build/?project=euara-lib 2>&1"
   },
   "author": "",

@@ -1,5 +1,6 @@
 export * from './euara-lib';
 export * from './manifest';
+export { Utils as NpmUtils } from './utils';
 
 //import { Euara, EuaraConfig} from './euara-lib';
 //import { ManifestSigner, ManifestSignerType, ManifestSignatureStatus, ManifestState  } from './manifest';

@@ -18,9 +18,8 @@ export class Manifest {
 
     constructor() {}
 
-    public validate() {
+    public validate(): ManifestState {
         let manifestCheck = this.getChecksum();
-        console.log('\t Manifest Checksum:', manifestCheck);
         let manifestState = new ManifestState();
         manifestState.signatures = [];
         this.signers.forEach(signer => {
