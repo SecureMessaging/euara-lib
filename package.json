@@ -2,8 +2,8 @@
   "name": "euara-lib",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-  "typings": "typings.d.ts",
+  "main": "./euara-lib/index.js",
+  "typings": ".euara-lib/typings.d.ts",
   "dependencies": {
     "checksum": "^0.1.1",
     "node-rsa": "^0.4.2",
