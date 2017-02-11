@@ -113,14 +113,31 @@ export class Euara {
         return true;
     }
 
-    async downloadRelease(manifestName: string, manifestVersion:string = 'latest'): Promise<string> {
+    async downloadManifest(manifestName: string, manifestVersion:string = 'latest'): Promise<Manifest> {
         let feed = await this.utils.getNPMFeed(this.config.npmRegistry, manifestName);
         let tarballFile = await this.utils.downloadTarball(feed, manifestVersion);
-        return await this.unZip(tarballFile);
+        let path = await this.unZip(tarballFile);
+        return await this.read(path + '\manifest.json');
     }
 
     public unZip(tarballFile: string): Promise<string> {
-        return this.utils.extractTarball(tarballFile);;
+        return this.utils.extractTarball(tarballFile);
+    }
+
+    async downloadRelease(manifestName: string, manifestVersion:string = 'latest'): Promise<string>{
+        let manifest = await this.downloadManifest(manifestName, manifestVersion);
+        let feed = await this.utils.getNPMFeed(this.config.npmRegistry, manifest.name);
+        let tarballFile = await this.utils.downloadTarball(feed, manifest.version);
+        let checksum = await this.utils.getFileChecksum(tarballFile);
+        if(manifest.checksum != checksum) {
+            throw "Checksome of release tarball does not match release manifest.";
+        }
+        manifest.checksum = checksum;
+        let status = manifest.validate();
+        if(status.isValid == false) {
+            throw "Invalid Manifest!";
+        }
+        return tarballFile;
     }
 
     private async readManifestFile(manifestFile: string): Promise<Object> {
