@@ -71,7 +71,8 @@ export class Manifest {
     public getChecksum(): string {
         let manifestCopy: Manifest = JSON.parse(this.toString());
         manifestCopy.signatures = [];
-        return utils.checksumData(this.toString(manifestCopy));
+        let checksome = utils.checksumData(this.toString(manifestCopy));
+        return checksome;
     }
 
     public toString(manifest?: Manifest): string {

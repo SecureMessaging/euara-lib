@@ -52,7 +52,7 @@ export class Euara {
         return this.mapObjectToManifest('Manifest', manifestObject);
     }
 
-    private mapObjectToManifest(type: string, object: Object) {
+    private mapObjectToManifest(type: string, object: Object): any {
         let instance;
         if(type == 'Manifest') {
             instance = new Manifest();
@@ -102,42 +102,58 @@ export class Euara {
         return manifest.sign(signer, privateKey);
     }
 
+    async incrementManifestVersion(manifest: Manifest): Promise<Manifest> {
+        let version = manifest.manifestVersion;
+        try {
+            let feed = await this.utils.getNPMFeed(this.config.npmRegistry, manifest.name + '-manifest');
+            version = feed.distTags['latest'];
+        } catch(err) {}
+        let major = version.split('.')[0];
+        let minor = version.split('.')[1];
+        let patch = parseInt(version.split('.')[2]) + 1;
+        manifest.manifestVersion = `${major}.${minor}.${patch}`;
+        return manifest;
+    }
+
     async publishManifest(manifest: Manifest) {
         let packageJson = this.convertManifestToNpmPackageJson(manifest);
         let tmpDir = await this.utils.newTmpDir(false);
-        console.log("tempDir", tmpDir);
         await this.writeManifestFile(tmpDir + '/manifest.json', manifest);
         await this.utils.writeFile(tmpDir + '/package.json', packageJson);
         let result = await this.utils.exec(`npm publish ${tmpDir} --access public`);
-        console.log(result);
         return true;
     }
 
     async downloadManifest(manifestName: string, manifestVersion:string = 'latest'): Promise<Manifest> {
-        let feed = await this.utils.getNPMFeed(this.config.npmRegistry, manifestName);
+        let feed = await this.utils.getNPMFeed(this.config.npmRegistry, manifestName + '-manifest');
+        if(!feed) {
+            throw "Manifest not found in NPM registry";
+        }
         let tarballFile = await this.utils.downloadTarball(feed, manifestVersion);
-        let path = await this.unZip(tarballFile);
-        return await this.read(path + '\manifest.json');
+        let mfs = await this.unZip(tarballFile);
+        let manifestJson = mfs.readFileSync('/package/manifest.json', 'utf8');
+        let manifestObj = JSON.parse(manifestJson);
+        let manifest = this.mapObjectToManifest('Manifest', manifestObj);
+        return ( manifest as Manifest);
     }
 
-    public unZip(tarballFile: string): Promise<string> {
+    public unZip(tarballFile: string): Promise<any> {
         return this.utils.extractTarball(tarballFile);
     }
 
-    async downloadRelease(manifestName: string, manifestVersion:string = 'latest'): Promise<string>{
+    async downloadRelease(manifestName: string, manifestVersion:string = 'latest'): Promise<ReleaseDownload>{
         let manifest = await this.downloadManifest(manifestName, manifestVersion);
         let feed = await this.utils.getNPMFeed(this.config.npmRegistry, manifest.name);
         let tarballFile = await this.utils.downloadTarball(feed, manifest.version);
         let checksum = await this.utils.getFileChecksum(tarballFile);
         if(manifest.checksum != checksum) {
-            throw "Checksome of release tarball does not match release manifest.";
+            throw "checksum of release tarball does not match release manifest.";
         }
-        manifest.checksum = checksum;
         let status = manifest.validate();
-        if(status.isValid == false) {
-            throw "Invalid Manifest!";
-        }
-        return tarballFile;
+        let release = new ReleaseDownload();
+        release.tarball = tarballFile;
+        release.validity = status;
+        return release;
     }
 
     private async readManifestFile(manifestFile: string): Promise<Object> {
@@ -158,7 +174,7 @@ export class Euara {
 
     private convertManifestToNpmPackageJson(manifest: Manifest): string {
         return JSON.stringify({
-            name : manifest.name,
+            name : manifest.name + '-manifest',
             version: manifest.manifestVersion
         });
     }
@@ -173,3 +189,8 @@ export class EuaraConfig {
 
 
 //npm set registry https://registry.npmjs.org/^C
+
+export class ReleaseDownload {
+    tarball: string;
+    validity: ManifestState;
+}

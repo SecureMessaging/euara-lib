@@ -6,7 +6,7 @@ import * as http from 'http';
 import * as checksum from 'checksum';
 import * as request from 'request';
 import tmp = require('tmp');
-import tar = require('tar');
+var untarToMemory = require('untar-memory')
 let exec = require('child_process').exec;
 
 
@@ -44,7 +44,7 @@ export class Utils {
         let url = dist.tarball;
         return new Observable<string>((o: Observer<string>) => {
             setTimeout(() => {       
-                let fileName = tmp.tmpNameSync();
+                let fileName = tmp.tmpNameSync() + '.tar';
                 var file = fs.createWriteStream(fileName, { encoding: 'binary'});
                 var request = http.get(url, function(response: any) {
                     response.setEncoding('binary');
@@ -99,20 +99,15 @@ export class Utils {
         }).toPromise();
     }
 
-    public extractTarball(fileName: string): Promise<string> {
-        return new Observable<string>((o: Observer<string>) => {
-            var tmpobj = tmp.dirSync();
-            tar.Extract({
-                path: tmpobj,
-                strip: 0
-            });
-            tar.on('end', x => {
-                o.next(tmpobj);
+    public extractTarball(fileName: string): Promise<any> {
+        return new Observable<any>((o: Observer<any>) => {
+            untarToMemory(fileName)
+            .then((memoryFileSystem) => {
+                o.next(memoryFileSystem);
                 o.complete();
-            });
-            tar.on('error', x => {
-                o.next(null);
-                console.log('Tar Extract Error', x);
+            })
+            .catch((err) => {
+                o.error(err);
                 o.complete();
             });
         }).toPromise();
