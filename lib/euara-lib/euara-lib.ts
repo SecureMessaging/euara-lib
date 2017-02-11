@@ -153,6 +153,7 @@ export class Euara {
         let release = new ReleaseDownload();
         release.tarball = tarballFile;
         release.validity = status;
+        release.manifest = manifest;
         return release;
     }
 
@@ -193,4 +194,5 @@ export class EuaraConfig {
 export class ReleaseDownload {
     tarball: string;
     validity: ManifestState;
+    manifest: Manifest;
 }

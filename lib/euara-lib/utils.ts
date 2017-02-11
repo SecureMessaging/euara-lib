@@ -6,7 +6,7 @@ import * as http from 'http';
 import * as checksum from 'checksum';
 import * as request from 'request';
 import tmp = require('tmp');
-var untarToMemory = require('untar-memory')
+var untarToMemory = require('untar-memory');
 let exec = require('child_process').exec;
 
 
